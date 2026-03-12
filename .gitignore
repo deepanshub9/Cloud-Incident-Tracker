@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment
+.env
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# VS Code
+.vscode/
