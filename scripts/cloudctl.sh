@@ -19,6 +19,9 @@ APP_VERSION="${APP_VERSION:-v2}"
 AWS_REGION="${AWS_REGION:-us-east-2}"
 ECR_REPOSITORY="${ECR_REPOSITORY:-secure-mini-app}"
 INFRA_DIR="${INFRA_DIR:-infra}"
+TF_STATE_BUCKET="${TF_STATE_BUCKET:-}"
+TF_STATE_DDB_TABLE="${TF_STATE_DDB_TABLE:-}"
+TF_STATE_KEY="${TF_STATE_KEY:-env/dev/terraform.tfstate}"
 EKS_CLUSTER_NAME="${EKS_CLUSTER_NAME:-}"
 EKS_NODEGROUP_NAME="${EKS_NODEGROUP_NAME:-}"
 
@@ -153,7 +156,7 @@ deploy_aws() {
   push_image_to_ecr
 
   log "Applying Terraform in ${INFRA_DIR}"
-  terraform -chdir="${INFRA_DIR}" init
+  terraform_init_infra
   terraform -chdir="${INFRA_DIR}" apply -auto-approve
 
   if [[ -n "${EKS_CLUSTER_NAME}" ]]; then
@@ -176,7 +179,7 @@ destroy_aws() {
   fi
 
   log "Destroying Terraform infra in ${INFRA_DIR}"
-  terraform -chdir="${INFRA_DIR}" init
+  terraform_init_infra
   terraform -chdir="${INFRA_DIR}" destroy -auto-approve
 
   log "AWS resources destroyed"
@@ -242,6 +245,21 @@ status_aws() {
     --region "${AWS_REGION}" \
     --query 'nodegroup.[status,scalingConfig.desiredSize,scalingConfig.minSize,scalingConfig.maxSize]' \
     --output table
+}
+
+terraform_init_infra() {
+  if [[ -n "${TF_STATE_BUCKET}" && -n "${TF_STATE_DDB_TABLE}" ]]; then
+    log "Initializing Terraform with remote S3 backend"
+    terraform -chdir="${INFRA_DIR}" init \
+      -backend-config="bucket=${TF_STATE_BUCKET}" \
+      -backend-config="key=${TF_STATE_KEY}" \
+      -backend-config="region=${AWS_REGION}" \
+      -backend-config="dynamodb_table=${TF_STATE_DDB_TABLE}" \
+      -backend-config="encrypt=true"
+  else
+    log "TF_STATE_BUCKET/TF_STATE_DDB_TABLE not set; using local Terraform state"
+    terraform -chdir="${INFRA_DIR}" init -backend=false
+  fi
 }
 
 usage() {
