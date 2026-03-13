@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom-lab
+  namespace: dev
+  labels:
+    app: oom-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oom-lab
+  template:
+    metadata:
+      labels:
+        app: oom-lab
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: oom-lab
+          image: python:3.12-alpine
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          command: ["python", "-c"]
+          args:
+            - |
+              data=[]
+              while True:
+                data.append('X' * 1024 * 1024)
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "64Mi"

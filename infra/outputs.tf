@@ -70,6 +70,14 @@ output "grafana_lb_hostname" {
   value = try(module.observability[0].grafana_lb_hostname, null)
 }
 
+output "prometheus_service_name" {
+  value = try(module.observability[0].prometheus_service_name, null)
+}
+
+output "prometheus_lb_hostname" {
+  value = try(module.observability[0].prometheus_lb_hostname, null)
+}
+
 output "observability_service_monitor_name" {
   value = try(module.observability[0].service_monitor_name, null)
 }
