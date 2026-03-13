@@ -109,3 +109,124 @@ Use the control script at [scripts/cloudctl.sh](scripts/cloudctl.sh).
 
 - For `stop aws` / `resume aws`, set `EKS_CLUSTER_NAME` and `EKS_NODEGROUP_NAME` in `.env`.
 - `deploy aws` expects Terraform files under the `infra` directory (`INFRA_DIR` can be changed in `.env`).
+
+## Phase 7 — Linux/runtime troubleshooting lab
+
+This phase gives hands-on ops troubleshooting skills on EKS nodes and containers.
+
+### What is included
+
+- Host sysctl hardening profile as DaemonSet:
+  - `ops/phase7/00-sysctl-hardening-daemonset.yaml`
+- OOM simulation deployment:
+  - `ops/phase7/10-oom-sim-deployment.yaml`
+- One-command lab runner:
+  - `scripts/phase7-runtime-lab.sh`
+
+### Run the full lab
+
+```bash
+bash scripts/phase7-runtime-lab.sh full
+```
+
+### Run step-by-step
+
+1. Apply host sysctl hardening and verify effective values:
+
+```bash
+bash scripts/phase7-runtime-lab.sh apply-sysctl
+```
+
+2. Validate runtime behavior on the real app pod:
+
+```bash
+bash scripts/phase7-runtime-lab.sh validate-runtime
+```
+
+3. Run OOM simulation and inspect debug evidence (`describe`, events, logs):
+
+```bash
+bash scripts/phase7-runtime-lab.sh run-oom
+```
+
+4. Clean up lab resources:
+
+```bash
+bash scripts/phase7-runtime-lab.sh cleanup
+```
+
+### What to look for (expected outcomes)
+
+- Sysctl verification outputs should show:
+  - `kernel.kptr_restrict=2`
+  - `kernel.dmesg_restrict=1`
+  - `net.ipv4.conf.all.rp_filter=1`
+  - `net.ipv4.conf.default.rp_filter=1`
+  - `net.ipv4.tcp_syncookies=1`
+- OOM simulation should show `OOMKilled` in pod state or last state.
+- `kubectl describe pod` should contain memory limit and container restart signals.
+- `kubectl logs --previous` should help confirm restart cycle behavior.
+
+## Phase 8 — Incident simulation and response
+
+This phase runs a full incident-response loop by intentionally breaking RBAC for a synthetic monitoring probe, detecting the denial through Prometheus and Grafana, restoring the binding, and capturing a short postmortem.
+
+### What is included
+
+- RBAC-denial alert rule:
+  - `ops/phase8/00-incident-target-down-alert.yaml`
+- Smokecheck RBAC:
+  - `ops/phase8/10-rbac-smokecheck-rbac.yaml`
+- Smokecheck deployment + ServiceMonitor:
+  - `ops/phase8/15-rbac-smokecheck-stack.yaml`
+- Grafana drill dashboard:
+  - `ops/phase8/20-incident-response-dashboard.yaml`
+- One-command response drill:
+  - `scripts/phase8-incident-response.sh`
+- Short postmortem:
+  - `ops/phase8/postmortem.md`
+
+### Run the full loop
+
+```bash
+bash scripts/phase8-incident-response.sh full
+```
+
+### Run step-by-step
+
+1. Install the alert rule and Grafana drill dashboard:
+
+```bash
+bash scripts/phase8-incident-response.sh install
+```
+
+2. Break the smokecheck RoleBinding intentionally:
+
+```bash
+bash scripts/phase8-incident-response.sh break
+```
+
+3. Detect the incident through Prometheus, Grafana, and the alert API:
+
+```bash
+bash scripts/phase8-incident-response.sh detect
+```
+
+4. Re-apply the missing RoleBinding:
+
+```bash
+bash scripts/phase8-incident-response.sh fix
+```
+
+5. Verify recovery and alert clearance:
+
+```bash
+bash scripts/phase8-incident-response.sh verify
+```
+
+### Expected outcomes
+
+- `rbac_smokecheck_denied` flips from `0` to `1` during the incident.
+- `DevReaderRBACDenied` appears in Prometheus active alerts.
+- Grafana shows the `Incident Response Drill` dashboard.
+- After rollback, `rbac_smokecheck_denied` returns to `0` and the alert clears.
