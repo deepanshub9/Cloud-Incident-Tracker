@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: incident-tracker-phase8-alerts
+  namespace: monitoring
+  labels:
+    app: incident-tracker
+spec:
+  groups:
+    - name: incident-tracker.phase8
+      rules:
+        - alert: DevReaderRBACDenied
+          expr: max_over_time(rbac_smokecheck_denied[2m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+            service: rbac-smokecheck
+            scenario: phase8
+          annotations:
+            summary: RBAC smokecheck lost pod list permission in dev
+            description: The RBAC smokecheck probe cannot list pods in dev and is exporting rbac_smokecheck_denied=1.
