@@ -28,3 +28,16 @@ provider "kubernetes" {
     args        = ["eks", "get-token", "--region", var.aws_region, "--cluster-name", module.eks.cluster_name]
   }
 }
+
+provider "helm" {
+  kubernetes {
+    host                   = data.aws_eks_cluster.selected.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.selected.certificate_authority[0].data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--region", var.aws_region, "--cluster-name", module.eks.cluster_name]
+    }
+  }
+}

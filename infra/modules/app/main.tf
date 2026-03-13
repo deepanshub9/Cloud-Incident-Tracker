@@ -119,6 +119,7 @@ resource "kubernetes_service_v1" "this" {
     type     = "LoadBalancer"
 
     port {
+      name        = "http"
       port        = 80
       target_port = var.container_port
       protocol    = "TCP"

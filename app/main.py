@@ -3,12 +3,27 @@ import socket
 import sqlite3
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
+from prometheus_client import CONTENT_TYPE_LATEST, Gauge, generate_latest
 
 app = Flask(__name__)
 
 DB_PATH = os.getenv("DB_PATH", os.path.join("data", "incidents.db"))
 SEVERITIES = {"P1", "P2", "P3", "P4"}
+
+INCIDENT_OPEN_TOTAL = Gauge(
+    "incident_open_total",
+    "Current number of open incidents",
+)
+INCIDENT_RESOLVED_TOTAL = Gauge(
+    "incident_resolved_total",
+    "Current number of resolved incidents",
+)
+INCIDENT_OPEN_BY_SEVERITY = Gauge(
+    "incident_open_by_severity",
+    "Current number of open incidents by severity",
+    ["severity"],
+)
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -77,7 +92,18 @@ def summary() -> dict:
     }
 
 
+def refresh_incident_metrics() -> None:
+    current = summary()
+    INCIDENT_OPEN_TOTAL.set(current["open"])
+    INCIDENT_RESOLVED_TOTAL.set(current["resolved"])
+    for severity in sorted(SEVERITIES):
+        INCIDENT_OPEN_BY_SEVERITY.labels(severity=severity).set(
+            current["severity"].get(severity, 0)
+        )
+
+
 init_db()
+refresh_incident_metrics()
 
 
 @app.get("/")
@@ -111,7 +137,15 @@ def info():
 
 @app.get("/api/summary")
 def get_summary():
-    return jsonify(summary())
+    current = summary()
+    refresh_incident_metrics()
+    return jsonify(current)
+
+
+@app.get("/metrics")
+def metrics():
+    refresh_incident_metrics()
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 
 @app.get("/api/incidents")
@@ -166,6 +200,8 @@ def create_incident():
     finally:
         conn.close()
 
+    refresh_incident_metrics()
+
     return jsonify(dict(row)), 201
 
 
@@ -189,6 +225,8 @@ def resolve_incident(incident_id: int):
         row = conn.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,)).fetchone()
     finally:
         conn.close()
+
+    refresh_incident_metrics()
 
     return jsonify(dict(row))
 

@@ -32,6 +32,11 @@ simulate_overprivilege              = false
 
 node_instance_types = ["t3.small", "t3a.small"]
 node_capacity_type  = "SPOT"
-node_desired_size   = 1
-node_min_size       = 1
-node_max_size       = 2
+node_desired_size   = 2
+node_min_size       = 2
+node_max_size       = 3
+
+enable_observability = true
+monitoring_namespace = "monitoring"
+prometheus_retention = "7d"
+grafana_service_type = "LoadBalancer"

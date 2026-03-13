@@ -57,3 +57,23 @@ output "prod_operator_service_account" {
 output "overprivilege_simulation_enabled" {
   value = module.security.overprivilege_simulation_enabled
 }
+
+output "monitoring_namespace" {
+  value = try(module.observability[0].monitoring_namespace, null)
+}
+
+output "grafana_service_name" {
+  value = try(module.observability[0].grafana_service_name, null)
+}
+
+output "grafana_lb_hostname" {
+  value = try(module.observability[0].grafana_lb_hostname, null)
+}
+
+output "observability_service_monitor_name" {
+  value = try(module.observability[0].service_monitor_name, null)
+}
+
+output "observability_alert_rules_name" {
+  value = try(module.observability[0].alert_rules_name, null)
+}

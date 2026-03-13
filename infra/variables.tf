@@ -225,3 +225,34 @@ variable "simulate_overprivilege" {
   type        = bool
   default     = false
 }
+
+variable "enable_observability" {
+  description = "Enable monitoring stack (Prometheus, Grafana, alert rules, dashboards)"
+  type        = bool
+  default     = true
+}
+
+variable "monitoring_namespace" {
+  description = "Namespace where kube-prometheus-stack is installed"
+  type        = string
+  default     = "monitoring"
+}
+
+variable "prometheus_retention" {
+  description = "Prometheus data retention"
+  type        = string
+  default     = "7d"
+}
+
+variable "grafana_service_type" {
+  description = "Kubernetes service type for Grafana"
+  type        = string
+  default     = "LoadBalancer"
+}
+
+variable "grafana_admin_password" {
+  description = "Admin password for Grafana"
+  type        = string
+  default     = "ChangeMe-Observability-123!"
+  sensitive   = true
+}

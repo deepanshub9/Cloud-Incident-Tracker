@@ -6,3 +6,8 @@ node_instance_types = ["t3.medium"]
 node_desired_size   = 1
 node_min_size       = 1
 node_max_size       = 3
+
+enable_observability = true
+monitoring_namespace = "monitoring"
+prometheus_retention = "7d"
+grafana_service_type = "LoadBalancer"

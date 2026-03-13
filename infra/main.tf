@@ -73,3 +73,20 @@ module "security" {
 
   depends_on = [module.app]
 }
+
+module "observability" {
+  count  = var.enable_observability ? 1 : 0
+  source = "./modules/observability"
+
+  cluster_name           = module.eks.cluster_name
+  aws_region             = var.aws_region
+  monitoring_namespace   = var.monitoring_namespace
+  app_namespace          = var.environment
+  app_name               = var.app_name
+  app_service_port_name  = "http"
+  prometheus_retention   = var.prometheus_retention
+  grafana_service_type   = var.grafana_service_type
+  grafana_admin_password = var.grafana_admin_password
+
+  depends_on = [module.security]
+}
