@@ -109,3 +109,60 @@ Use the control script at [scripts/cloudctl.sh](scripts/cloudctl.sh).
 
 - For `stop aws` / `resume aws`, set `EKS_CLUSTER_NAME` and `EKS_NODEGROUP_NAME` in `.env`.
 - `deploy aws` expects Terraform files under the `infra` directory (`INFRA_DIR` can be changed in `.env`).
+
+## Phase 7 — Linux/runtime troubleshooting lab
+
+This phase gives hands-on ops troubleshooting skills on EKS nodes and containers.
+
+### What is included
+
+- Host sysctl hardening profile as DaemonSet:
+  - `ops/phase7/00-sysctl-hardening-daemonset.yaml`
+- OOM simulation deployment:
+  - `ops/phase7/10-oom-sim-deployment.yaml`
+- One-command lab runner:
+  - `scripts/phase7-runtime-lab.sh`
+
+### Run the full lab
+
+```bash
+bash scripts/phase7-runtime-lab.sh full
+```
+
+### Run step-by-step
+
+1. Apply host sysctl hardening and verify effective values:
+
+```bash
+bash scripts/phase7-runtime-lab.sh apply-sysctl
+```
+
+2. Validate runtime behavior on the real app pod:
+
+```bash
+bash scripts/phase7-runtime-lab.sh validate-runtime
+```
+
+3. Run OOM simulation and inspect debug evidence (`describe`, events, logs):
+
+```bash
+bash scripts/phase7-runtime-lab.sh run-oom
+```
+
+4. Clean up lab resources:
+
+```bash
+bash scripts/phase7-runtime-lab.sh cleanup
+```
+
+### What to look for (expected outcomes)
+
+- Sysctl verification outputs should show:
+  - `kernel.kptr_restrict=2`
+  - `kernel.dmesg_restrict=1`
+  - `net.ipv4.conf.all.rp_filter=1`
+  - `net.ipv4.conf.default.rp_filter=1`
+  - `net.ipv4.tcp_syncookies=1`
+- OOM simulation should show `OOMKilled` in pod state or last state.
+- `kubectl describe pod` should contain memory limit and container restart signals.
+- `kubectl logs --previous` should help confirm restart cycle behavior.

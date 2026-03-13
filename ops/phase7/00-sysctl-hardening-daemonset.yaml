@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-sysctl-hardening
+  namespace: kube-system
+  labels:
+    app: node-sysctl-hardening
+spec:
+  selector:
+    matchLabels:
+      app: node-sysctl-hardening
+  template:
+    metadata:
+      labels:
+        app: node-sysctl-hardening
+    spec:
+      hostPID: true
+      hostNetwork: true
+      tolerations:
+        - operator: Exists
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: apply-sysctl
+          image: public.ecr.aws/docker/library/alpine:3.20
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              chroot /host /sbin/sysctl -w kernel.kptr_restrict=2
+              chroot /host /sbin/sysctl -w kernel.dmesg_restrict=1
+              chroot /host /sbin/sysctl -w net.ipv4.conf.all.rp_filter=1
+              chroot /host /sbin/sysctl -w net.ipv4.conf.default.rp_filter=1
+              chroot /host /sbin/sysctl -w net.ipv4.tcp_syncookies=1
+              sleep 86400
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory
