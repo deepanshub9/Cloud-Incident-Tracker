@@ -276,6 +276,34 @@ resource "helm_release" "monitoring_addons" {
   depends_on = [helm_release.kube_prometheus_stack]
 }
 
+resource "kubernetes_service_v1" "prometheus_external" {
+  metadata {
+    name      = "monitoring-prometheus-external"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    labels = {
+      app = "monitoring-prometheus-external"
+    }
+  }
+
+  spec {
+    type = "LoadBalancer"
+
+    selector = {
+      "app.kubernetes.io/name"      = "prometheus"
+      "operator.prometheus.io/name" = "monitoring-kube-prometheus-prometheus"
+    }
+
+    port {
+      name        = "http"
+      port        = 80
+      target_port = 9090
+      protocol    = "TCP"
+    }
+  }
+
+  depends_on = [helm_release.kube_prometheus_stack]
+}
+
 data "kubernetes_service_v1" "grafana" {
   metadata {
     name      = "${helm_release.kube_prometheus_stack.name}-grafana"
@@ -283,4 +311,13 @@ data "kubernetes_service_v1" "grafana" {
   }
 
   depends_on = [helm_release.kube_prometheus_stack, helm_release.monitoring_addons]
+}
+
+data "kubernetes_service_v1" "prometheus_external" {
+  metadata {
+    name      = kubernetes_service_v1.prometheus_external.metadata[0].name
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+  }
+
+  depends_on = [kubernetes_service_v1.prometheus_external]
 }
