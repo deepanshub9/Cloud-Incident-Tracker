@@ -1,232 +1,155 @@
 # Cloud Incident Tracker App
 
-This repository now contains a **real-use-case app**: a cloud incident tracker for DevOps/SRE practice.
+Welcome! This practical DevOps/SRE learning app.  
+It helps you simulate real production incidents, monitor them, respond to alerts, and verify recovery.
 
-## Use case
+The goal is simple: learn the full incident lifecycle in a safe way, from “issue created” to “issue resolved.”
 
-Track production incidents for services (payments, auth, orders), then resolve them. This maps directly to your monitoring + incident response flow on AWS/EKS.
+## What this application does
 
-## Features
+This is a web-based incident tracker built with Flask and SQLite.
 
-- Incident dashboard UI
-- Create incidents with severity (P1-P4)
-- Mark incidents as resolved
-- Live counters (open, resolved, P1/P2/P3/P4)
-- API endpoints for integration/testing
-- Health endpoint for Kubernetes probes
+You can:
 
-## Project structure
+- Create incidents for services such as payments, auth, and orders
+- Assign severity levels (`P1` to `P4`)
+- Resolve incidents when recovery is done
+- View live counters (open, resolved, and by severity)
+- Expose Prometheus metrics for monitoring dashboards and alerts
 
-- `app/main.py` - Flask backend + SQLite APIs
-- `app/templates/index.html` - interactive incident dashboard
-- `requirements.txt` - Python dependencies
-- `Dockerfile` - secure container image
+This makes it useful for both app developers and platform/operations teams.
 
-## APIs
+## Who should use this project
 
-- `GET /health`
-- `GET /api/info`
-- `GET /api/summary`
-- `GET /api/incidents?status=open|resolved|all`
-- `POST /api/incidents`
-- `PATCH /api/incidents/<id>/resolve`
+- **Beginners**: learn API basics, Docker usage, and simple incident workflow
+- **Intermediate users**: practice Kubernetes operations, observability, and scripting
+- **Advanced users**: run realistic incident drills (RBAC failures, OOM behavior, alert response)
 
-Example payload for create:
+## Application and Monitoring Screenshots
 
-```json
-{
-  "service": "payments-api",
-  "title": "High error rate",
-  "severity": "P1",
-  "description": "5xx spike after deployment"
-}
-```
+### 1. Grafana Data Sources
 
-## Run locally (without Docker)
+[![Grafana Data Sources](https://github.com/user-attachments/assets/bf6ced0b-0266-42bf-81fe-6f76733ba5f9)](https://github.com/user-attachments/assets/bf6ced0b-0266-42bf-81fe-6f76733ba5f9)
 
-1. Create virtual environment
-   - Windows PowerShell:
-     - `python -m venv .venv`
-     - `.\.venv\Scripts\Activate.ps1`
-2. Install dependencies
-   - `pip install -r requirements.txt`
-3. Start app
-   - `python app/main.py`
-4. Open in browser
-   - `http://localhost:8080`
+### 2. Prometheus Targets / Metrics View
 
-## Run with Docker
+[![Prometheus Targets](https://github.com/user-attachments/assets/4a78ae33-e847-414e-8e38-e17d26c47d48)](https://github.com/user-attachments/assets/4a78ae33-e847-414e-8e38-e17d26c47d48)
 
-1. Build image
-   - `docker build -t secure-mini-app:v2 .`
-2. Start container
-   - `docker run --rm -p 8080:8080 -e ENV_NAME=local -e APP_VERSION=v2 secure-mini-app:v2`
-3. Open browser
-   - `http://localhost:8080`
+### 3. Alertmanager Configuration
 
-## Why this is better for your AWS project
+[![Alertmanager Configuration](https://github.com/user-attachments/assets/a6675001-e0da-4a46-9239-a05474b89e87)](https://github.com/user-attachments/assets/a6675001-e0da-4a46-9239-a05474b89e87)
 
-- Works naturally with Prometheus/Grafana (incident metrics view)
-- Good for RBAC demo (read-only vs incident manager)
-- Good for incident simulation (create P1, observe, resolve, postmortem)
+### 4. Grafana Dashboard / Monitoring Overview
 
-## One-click operations (deploy / destroy / stop / resume)
+[![Grafana Dashboard](https://github.com/user-attachments/assets/79e5c097-aa4e-41a3-bcb4-448cb2148816)](https://github.com/user-attachments/assets/79e5c097-aa4e-41a3-bcb4-448cb2148816)
 
-Use the control script at [scripts/cloudctl.sh](scripts/cloudctl.sh).
+## How the system is organized
 
-### 1) Setup config once
+At a high level, the project has four layers:
 
-1. Copy [.env.example](.env.example) to `.env`
-2. Edit values in `.env` (AWS region, repository, cluster names later)
+1. **Application layer**: Flask UI + REST APIs + SQLite incident storage
+2. **Container layer**: Docker image and runtime settings
+3. **Infrastructure layer**: Terraform modules for AWS/EKS networking, security, and observability
+4. **Operations layer**: phase-based scripts and manifests for troubleshooting and incident simulation
 
-### 2) Local one-click lifecycle
+## Project structure (explained)
 
-- Deploy app locally:
-  - `bash scripts/cloudctl.sh deploy local`
-- Stop local app (keep container):
-  - `bash scripts/cloudctl.sh stop local`
-- Resume local app:
-  - `bash scripts/cloudctl.sh resume local`
-- Destroy local app:
-  - `bash scripts/cloudctl.sh destroy local`
-- Check local status:
-  - `bash scripts/cloudctl.sh status local`
+### Root files
 
-### 3) AWS one-click lifecycle (after Terraform infra is added)
+- `README.md`  
+  Main documentation and operational guide.
+- `requirements.txt`  
+  Python package dependencies used by the Flask app.
+- `Dockerfile`  
+  Container build definition for running the app consistently across environments.
 
-- Deploy AWS (push image to ECR + terraform apply):
-  - `bash scripts/cloudctl.sh deploy aws`
-- Stop AWS cost (scale EKS node group to zero):
-  - `bash scripts/cloudctl.sh stop aws`
-- Resume AWS (scale EKS node group back to one):
-  - `bash scripts/cloudctl.sh resume aws`
-- Destroy AWS infra:
-  - `bash scripts/cloudctl.sh destroy aws`
-- Check AWS node group status:
-  - `bash scripts/cloudctl.sh status aws`
+### `app/` — Application module
 
-### Notes
+- `app/main.py`  
+  Core backend module. It handles:
+  - database initialization and access
+  - incident CRUD-style workflows (create/list/resolve)
+  - summary generation (open/resolved/severity counts)
+  - metrics refresh for Prometheus
+  - health/info endpoints used by Kubernetes and monitoring
+- `app/templates/index.html`  
+  Frontend dashboard page for human users to view and manage incidents.
+- `app/__init__.py`  
+  Package marker for Python module structure.
 
-- For `stop aws` / `resume aws`, set `EKS_CLUSTER_NAME` and `EKS_NODEGROUP_NAME` in `.env`.
-- `deploy aws` expects Terraform files under the `infra` directory (`INFRA_DIR` can be changed in `.env`).
+### `data/` — Local persistence
 
-## Phase 7 — Linux/runtime troubleshooting lab
+- Stores the SQLite database file (`incidents.db`) at runtime.
+- Keeps local state simple for fast learning and testing.
 
-This phase gives hands-on ops troubleshooting skills on EKS nodes and containers.
+### `infra/` — Infrastructure as Code module set
 
-### What is included
+- `main.tf`, `variables.tf`, `outputs.tf`, `providers.tf`, `versions.tf`  
+  Terraform root configuration that composes all modules.
+- `backend.tf`  
+  State backend configuration pattern (local or remote state strategy).
+- `environments/dev.tfvars`, `environments/prod.tfvars`  
+  Environment-specific values.
+- `bootstrap/`  
+  Initial Terraform setup helpers (commonly used for backend prerequisites).
 
-- Host sysctl hardening profile as DaemonSet:
-  - `ops/phase7/00-sysctl-hardening-daemonset.yaml`
-- OOM simulation deployment:
-  - `ops/phase7/10-oom-sim-deployment.yaml`
-- One-command lab runner:
-  - `scripts/phase7-runtime-lab.sh`
+#### `infra/modules/` (each module purpose)
 
-### Run the full lab
+- `network/` — VPC/subnet/network foundation
+- `security/` — IAM/security controls and related guardrails
+- `eks/` — Kubernetes control plane and worker node infrastructure
+- `ecr/` — Container registry for application images
+- `app/` — Application deployment resources on Kubernetes/cloud layer
+- `observability/` — Prometheus/Grafana/monitoring integrations and exposure
 
-```bash
-bash scripts/phase7-runtime-lab.sh full
-```
+### `ops/` — Operations and incident labs
 
-### Run step-by-step
+- `ops/phase7/`  
+  Linux/runtime troubleshooting assets (sysctl hardening + OOM simulation).
+- `ops/phase8/`  
+  Incident-response drill assets (RBAC break, detection, recovery, postmortem).
 
-1. Apply host sysctl hardening and verify effective values:
+### `scripts/` — Automation module
 
-```bash
-bash scripts/phase7-runtime-lab.sh apply-sysctl
-```
+- `scripts/cloudctl.sh`  
+  One-command lifecycle operations for local and AWS flows (`deploy`, `stop`, `resume`, `destroy`, `status`).
+- `scripts/phase7-runtime-lab.sh`  
+  Guided runtime troubleshooting workflow (`apply-sysctl`, `validate-runtime`, `run-oom`, `cleanup`, `full`).
+- `scripts/phase8-incident-response.sh`  
+  End-to-end incident drill workflow (`install`, `break`, `detect`, `fix`, `verify`, `cleanup`, `full`).
 
-2. Validate runtime behavior on the real app pod:
+## API overview (what each endpoint means)
 
-```bash
-bash scripts/phase7-runtime-lab.sh validate-runtime
-```
+- `GET /health`  
+  Simple readiness/liveness style check.
+- `GET /api/info`  
+  Runtime metadata (app name, environment, version, host, UTC time).
+- `GET /api/summary`  
+  Aggregate incident counts and severity snapshot.
+- `GET /api/incidents?status=open|resolved|all`  
+  Incident listing filtered by status.
+- `POST /api/incidents`  
+  Create a new incident.
+- `PATCH /api/incidents/<id>/resolve`  
+  Mark an open incident as resolved.
+- `GET /metrics`  
+  Prometheus metrics endpoint for dashboards and alerts.
 
-3. Run OOM simulation and inspect debug evidence (`describe`, events, logs):
+## Quick usage guide
 
-```bash
-bash scripts/phase7-runtime-lab.sh run-oom
-```
+- Local lifecycle commands are managed through `scripts/cloudctl.sh`.
+- AWS lifecycle commands are also managed through `scripts/cloudctl.sh` (with Terraform + ECR + EKS context).
+- Phase drills are run with `scripts/phase7-runtime-lab.sh` and `scripts/phase8-incident-response.sh`.
 
-4. Clean up lab resources:
+If you are new, start local first, then move to AWS and phase drills.
 
-```bash
-bash scripts/phase7-runtime-lab.sh cleanup
-```
+## Why this project is useful
 
-### What to look for (expected outcomes)
+This repository is more than a sample app. It is a complete learning path for:
 
-- Sysctl verification outputs should show:
-  - `kernel.kptr_restrict=2`
-  - `kernel.dmesg_restrict=1`
-  - `net.ipv4.conf.all.rp_filter=1`
-  - `net.ipv4.conf.default.rp_filter=1`
-  - `net.ipv4.tcp_syncookies=1`
-- OOM simulation should show `OOMKilled` in pod state or last state.
-- `kubectl describe pod` should contain memory limit and container restart signals.
-- `kubectl logs --previous` should help confirm restart cycle behavior.
+- application reliability thinking
+- operational debugging
+- monitoring and alert design
+- incident communication and recovery discipline
 
-## Phase 8 — Incident simulation and response
-
-This phase runs a full incident-response loop by intentionally breaking RBAC for a synthetic monitoring probe, detecting the denial through Prometheus and Grafana, restoring the binding, and capturing a short postmortem.
-
-### What is included
-
-- RBAC-denial alert rule:
-  - `ops/phase8/00-incident-target-down-alert.yaml`
-- Smokecheck RBAC:
-  - `ops/phase8/10-rbac-smokecheck-rbac.yaml`
-- Smokecheck deployment + ServiceMonitor:
-  - `ops/phase8/15-rbac-smokecheck-stack.yaml`
-- Grafana drill dashboard:
-  - `ops/phase8/20-incident-response-dashboard.yaml`
-- One-command response drill:
-  - `scripts/phase8-incident-response.sh`
-- Short postmortem:
-  - `ops/phase8/postmortem.md`
-
-### Run the full loop
-
-```bash
-bash scripts/phase8-incident-response.sh full
-```
-
-### Run step-by-step
-
-1. Install the alert rule and Grafana drill dashboard:
-
-```bash
-bash scripts/phase8-incident-response.sh install
-```
-
-2. Break the smokecheck RoleBinding intentionally:
-
-```bash
-bash scripts/phase8-incident-response.sh break
-```
-
-3. Detect the incident through Prometheus, Grafana, and the alert API:
-
-```bash
-bash scripts/phase8-incident-response.sh detect
-```
-
-4. Re-apply the missing RoleBinding:
-
-```bash
-bash scripts/phase8-incident-response.sh fix
-```
-
-5. Verify recovery and alert clearance:
-
-```bash
-bash scripts/phase8-incident-response.sh verify
-```
-
-### Expected outcomes
-
-- `rbac_smokecheck_denied` flips from `0` to `1` during the incident.
-- `DevReaderRBACDenied` appears in Prometheus active alerts.
-- Grafana shows the `Incident Response Drill` dashboard.
-- After rollback, `rbac_smokecheck_denied` returns to `0` and the alert clears.
+In short: it teaches both **how to build** and **how to operate** production-minded systems.
