@@ -27,21 +27,21 @@ This makes it useful for both app developers and platform/operations teams.
 
 ## Application and Monitoring Screenshots
 
-### 1. Grafana Data Sources
+### 1. Cloud Incident Tracker Application
 
-[![Grafana Data Sources](https://github.com/user-attachments/assets/bf6ced0b-0266-42bf-81fe-6f76733ba5f9)](https://github.com/user-attachments/assets/bf6ced0b-0266-42bf-81fe-6f76733ba5f9)
+[![Cloud Application](https://github.com/user-attachments/assets/a6675001-e0da-4a46-9239-a05474b89e87)](https://github.com/user-attachments/assets/a6675001-e0da-4a46-9239-a05474b89e87)
 
-### 2. Prometheus Targets / Metrics View
-
-[![Prometheus Targets](https://github.com/user-attachments/assets/4a78ae33-e847-414e-8e38-e17d26c47d48)](https://github.com/user-attachments/assets/4a78ae33-e847-414e-8e38-e17d26c47d48)
-
-### 3. Alertmanager Configuration
-
-[![Alertmanager Configuration](https://github.com/user-attachments/assets/a6675001-e0da-4a46-9239-a05474b89e87)](https://github.com/user-attachments/assets/a6675001-e0da-4a46-9239-a05474b89e87)
-
-### 4. Grafana Dashboard / Monitoring Overview
+### 2. Grafana Monitoring Overview
 
 [![Grafana Dashboard](https://github.com/user-attachments/assets/79e5c097-aa4e-41a3-bcb4-448cb2148816)](https://github.com/user-attachments/assets/79e5c097-aa4e-41a3-bcb4-448cb2148816)
+
+### 3. AWS Cloudwatch Metrics
+
+[![AWS Cloudwatch Metrics](https://github.com/user-attachments/assets/4a78ae33-e847-414e-8e38-e17d26c47d48)](https://github.com/user-attachments/assets/4a78ae33-e847-414e-8e38-e17d26c47d48)
+
+### 4. Grafana Disk Metrics
+
+[![Grafana Disk Metrics](https://github.com/user-attachments/assets/bf6ced0b-0266-42bf-81fe-6f76733ba5f9)](https://github.com/user-attachments/assets/bf6ced0b-0266-42bf-81fe-6f76733ba5f9)
 
 ## How the system is organized
 
