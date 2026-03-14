@@ -1,0 +1,9 @@
+{
+  "name": "cloud-incident-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Incident Tracker - Netlify deployment",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
