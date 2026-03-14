@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud Incident Tracker</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #121a2b;
+        --border: #22304a;
+        --text: #e6edf7;
+        --muted: #9fb0cb;
+        --primary: #60a5fa;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --ok: #22c55e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(circle at 20% 20%, #15243f 0%, var(--bg) 45%);
+        color: var(--text);
+      }
+      .container {
+        width: min(1100px, 95vw);
+        margin: 24px auto;
+      }
+      .panel {
+        background: linear-gradient(180deg, #0f1728, var(--card));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .heading {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+      }
+      .stat {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        background: #0b1322;
+      }
+      .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+      .value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+      .p1 { color: var(--danger); }
+      .p2 { color: #fb7185; }
+      .p3 { color: var(--warn); }
+      .p4 { color: #93c5fd; }
+      .ok { color: var(--ok); }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 16px;
+      }
+      form {
+        display: grid;
+        gap: 10px;
+      }
+      input, select, textarea, button {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #0b1322;
+        color: var(--text);
+        padding: 10px;
+      }
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+      button {
+        background: #1d4ed8;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .incident-list {
+        display: grid;
+        gap: 10px;
+      }
+      .incident {
+        border: 1px solid var(--border);
+        background: #0b1322;
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .incident-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+      }
+      .chip {
+        font-size: 0.78rem;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+      }
+      .row {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .tools {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .btn-secondary {
+        background: #334155;
+      }
+      .empty {
+        color: var(--muted);
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        padding: 16px;
+      }
+      @media (max-width: 920px) {
+        .stats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <section class="panel">
+        <div class="heading">
+          <div>
+            <h1 style="margin: 0">Cloud Incident Tracker</h1>
+            <div class="subtitle">Track incidents for services in dev/production environments.</div>
+          </div>
+          <div class="meta">
+            env: <b>netlify</b> · version: <b>v1</b><br />
+            <span id="currentTime"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel stats" id="stats">
+        <div class="stat"><div class="label">Open</div><div class="value" id="openCount">0</div></div>
+        <div class="stat"><div class="label">Resolved</div><div class="value ok" id="resolvedCount">0</div></div>
+        <div class="stat"><div class="label">P1</div><div class="value p1" id="p1Count">0</div></div>
+        <div class="stat"><div class="label">P2</div><div class="value p2" id="p2Count">0</div></div>
+        <div class="stat"><div class="label">P3</div><div class="value p3" id="p3Count">0</div></div>
+        <div class="stat"><div class="label">P4</div><div class="value p4" id="p4Count">0</div></div>
+      </section>
+
+      <section class="layout">
+        <aside class="panel">
+          <h3 style="margin-top: 0">Create Incident</h3>
+          <form id="incidentForm">
+            <input type="text" id="service" placeholder="Service name (e.g. payments-api)" required />
+            <input type="text" id="title" placeholder="Incident title" required />
+            <select id="severity" required>
+              <option value="P1">P1 - Critical</option>
+              <option value="P2">P2 - High</option>
+              <option value="P3" selected>P3 - Medium</option>
+              <option value="P4">P4 - Low</option>
+            </select>
+            <textarea id="description" placeholder="What happened?"></textarea>
+            <button type="submit">Create</button>
+          </form>
+          <p class="hint">Tip: Use this to simulate incidents during monitoring and response drills.</p>
+          <div class="tools">
+            <button class="btn-secondary" onclick="loadIncidents('open')">Open</button>
+            <button class="btn-secondary" onclick="loadIncidents('resolved')">Resolved</button>
+            <button class="btn-secondary" onclick="loadIncidents('all')">All</button>
+          </div>
+        </aside>
+
+        <main class="panel">
+          <h3 style="margin-top: 0">Incidents</h3>
+          <div id="incidentList" class="incident-list"></div>
+        </main>
+      </section>
+    </div>
+
+    <script>
+      let currentFilter = "open";
+
+      function updateTime() {
+        const now = new Date();
+        document.getElementById("currentTime").textContent =
+          now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
+      }
+      updateTime();
+      setInterval(updateTime, 1000);
+
+      function esc(str) {
+        return (str || "").replace(/[&<>"']/g, m => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        }[m]));
+      }
+
+      function formatUtc(iso) {
+        if (!iso) return "-";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleString("en-GB", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+          timeZone: "UTC"
+        }) + " UTC";
+      }
+
+      function resolutionDuration(startIso, endIso) {
+        if (!startIso || !endIso) return "";
+        const start = new Date(startIso).getTime();
+        const end = new Date(endIso).getTime();
+        if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "";
+
+        const totalSec = Math.floor((end - start) / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        if (min === 0) return `${sec}s`;
+        return `${min}m ${sec}s`;
+      }
+
+      async function refreshSummary() {
+        try {
+          const res = await fetch("/api/summary");
+          const data = await res.json();
+          document.getElementById("openCount").textContent = data.open;
+          document.getElementById("resolvedCount").textContent = data.resolved;
+          document.getElementById("p1Count").textContent = data.severity.P1;
+          document.getElementById("p2Count").textContent = data.severity.P2;
+          document.getElementById("p3Count").textContent = data.severity.P3;
+          document.getElementById("p4Count").textContent = data.severity.P4;
+        } catch (err) {
+          console.error("Failed to refresh summary:", err);
+        }
+      }
+
+      async function loadIncidents(filter = "open") {
+        currentFilter = filter;
+        try {
+          const res = await fetch(`/api/incidents?status=${filter}`);
+          const incidents = await res.json();
+          const list = document.getElementById("incidentList");
+
+          if (!incidents.length) {
+            list.innerHTML = '<div class="empty">No incidents found for this filter.</div>';
+            return;
+          }
+
+          list.innerHTML = incidents.map(item => {
+            const canResolve = item.status === "open";
+            const created = formatUtc(item.created_at);
+            const resolved = item.resolved_at ? formatUtc(item.resolved_at) : "";
+            const duration = item.resolved_at ? resolutionDuration(item.created_at, item.resolved_at) : "";
+            return `
+              <article class="incident">
+                <div class="incident-top">
+                  <strong>${esc(item.title)}</strong>
+                  <span class="chip">${esc(item.severity)}</span>
+                </div>
+                <div class="row">service: <b>${esc(item.service)}</b> · status: <b>${esc(item.status)}</b></div>
+                <div class="row">${esc(item.description || "No description")}</div>
+                <div class="row">created: ${esc(created)}</div>
+                ${item.resolved_at ? `<div class="row">resolved: ${esc(resolved)}${duration ? ` · took ${esc(duration)}` : ""}</div>` : ""}
+                ${canResolve ? `<div class="tools"><button onclick="resolveIncident(${item.id})">Mark Resolved</button></div>` : ""}
+              </article>
+            `;
+          }).join("");
+        } catch (err) {
+          console.error("Failed to load incidents:", err);
+          document.getElementById("incidentList").innerHTML =
+            '<div class="empty">Failed to load incidents. Please try again.</div>';
+        }
+      }
+
+      async function resolveIncident(id) {
+        try {
+          const res = await fetch(`/api/incidents/${id}/resolve`, { method: "PATCH" });
+          if (!res.ok) {
+            alert("Could not resolve incident.");
+            return;
+          }
+          await refreshSummary();
+          await loadIncidents(currentFilter);
+        } catch (err) {
+          alert("Could not resolve incident.");
+        }
+      }
+
+      document.getElementById("incidentForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const payload = {
+          service: document.getElementById("service").value.trim(),
+          title: document.getElementById("title").value.trim(),
+          severity: document.getElementById("severity").value,
+          description: document.getElementById("description").value.trim(),
+        };
+
+        try {
+          const res = await fetch("/api/incidents", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            alert(err.error || "Failed to create incident");
+            return;
+          }
+
+          event.target.reset();
+          document.getElementById("severity").value = "P3";
+          await refreshSummary();
+          await loadIncidents(currentFilter);
+        } catch (err) {
+          alert("Failed to create incident. Please try again.");
+        }
+      });
+
+      refreshSummary();
+      loadIncidents("open");
+      setInterval(() => {
+        refreshSummary();
+        loadIncidents(currentFilter);
+      }, 10000);
+    </script>
+  </body>
+</html>

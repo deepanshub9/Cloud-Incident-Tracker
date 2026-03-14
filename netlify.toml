@@ -1,0 +1,26 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/summary"
+  to = "/.netlify/functions/api-summary"
+  status = 200
+
+[[redirects]]
+  from = "/api/incidents"
+  to = "/.netlify/functions/api-incidents"
+  status = 200
+
+[[redirects]]
+  from = "/api/incidents/:id/resolve"
+  to = "/.netlify/functions/api-resolve?id=:id"
+  status = 200
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/health"
+  status = 200
